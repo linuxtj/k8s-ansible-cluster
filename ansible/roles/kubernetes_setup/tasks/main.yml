@@ -1,0 +1,31 @@
+---
+- name: Install kubeadm, kubelet, kubectl
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - kubeadm={{ k8s_version }}
+    - kubelet={{ k8s_version }}
+    - kubectl={{ k8s_version }}
+  notify: restart kubelet
+
+- name: Initialize Kubernetes cluster (master node)
+  command: kubeadm init --pod-network-cidr={{ k8s_pod_cidr }} --apiserver-cert-extra-sans={{ k8s_control_plane_ip }}
+  when: "'k8s-master' in group_names"
+  register: kubeadm_init
+
+- name: Copy kubeconfig (master node)
+  run_once: true
+  command:
+    cmd: cp /etc/kubernetes/admin.conf ~/.kube/config
+  when: "'k8s-master' in group_names"
+  become_user: "{{ ansible_user }}"
+
+- name: Install CNI (Calico)
+  when: "'k8s-master' in group_names"
+  command: kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+
+- name: Join worker nodes
+  command: "kubeadm join {{ k8s_control_plane_ip }}:6443 --token {{ kubeadm_init.stdout | regex_search('token\\s+(.+?)\\s+', '\\1')}} --discovery-token-ca-cert-hash sha256:{{ kubeadm_init.stdout | regex_search('sha256:(.+?)$', '\\1')}}"
+  when: "'k8s-worker' in group_names"
