@@ -1,0 +1,2 @@
+---
+cert_dir: "/etc/kubernetes/pki"
