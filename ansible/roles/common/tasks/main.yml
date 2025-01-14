@@ -1,0 +1,14 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+
+- name: Upgrade all packages
+  apt:
+    upgrade: dist
+    state: present
+
+- name: Install common utilities
+  apt:
+    name: "{{ common_packages }}"
+    state: present
