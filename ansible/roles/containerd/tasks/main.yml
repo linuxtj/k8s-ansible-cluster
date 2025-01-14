@@ -1,0 +1,45 @@
+---
+- name: Install containerd dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg
+    - lsb-release
+
+- name: Add Docker GPG apt key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker APT repository
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable
+    state: present
+
+- name: Install containerd.io
+  apt:
+    name: containerd.io
+    state: present
+    update_cache: yes
+
+- name: Create containerd configuration directory
+  file:
+    path: /etc/containerd
+    state: directory
+    mode: 0755
+
+- name: Generate containerd config.toml
+  command: containerd config default > /etc/containerd/config.toml
+  args:
+    creates: /etc/containerd/config.toml
+
+- name: Start and enable containerd
+  systemd:
+    name: containerd
+    state: started
+    enabled: yes
