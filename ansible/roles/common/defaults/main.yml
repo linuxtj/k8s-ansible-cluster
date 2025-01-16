@@ -1,5 +1,4 @@
----
-common_packages:
+ common_packages:
   - apt-transport-https
   - ca-certificates
   - curl

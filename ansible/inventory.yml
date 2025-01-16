@@ -2,26 +2,26 @@ all:
   children:
     k8s-masters:
       hosts:
-        k8s-master-1:
+        k8smaster1:
           ansible_host: 192.168.10.129
-        k8s-master-2:
+        k8smaster2:
           ansible_host: 192.168.10.130
-        k8s-master-3:
-          ansible_host: 192.168.10.131
+        k8smaster3:
+          ansible_host: 192.168.10.136
 
     k8s-workers:
       hosts:
-        k8s-worker-1:
+        k8sworker1:
           ansible_host: 192.168.10.132
-        k8s-worker-2:
+        k8sworker2:
           ansible_host: 192.168.10.133
 
     monitoring:
       hosts:
-          monitoring-host:
+          mon:
             ansible_host: 192.168.10.134
 
     logging:
       hosts:
-        logging-host:
+        log:
           ansible_host: 192.168.10.135

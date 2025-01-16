@@ -1,30 +1,29 @@
----
 - hosts: all
   become: true
   roles:
-    - common
-    - network
-    - containerd
-    - cert
+  - common
+  - network
+  - containerd
+  - cert
 
 - hosts: k8s-masters
   become: true
   roles:
-    - kubernetes_setup
+  - kubernetes_setup
 
 - hosts: k8s-workers
   become: true
   roles:
-    - kubernetes_setup
+  - kubernetes_setup
 
-- hosts: monitoring
-  become: true
-  roles:
-    - prometheus
-    - grafana
+#hosts: monitoring
+#  become: true
+#  roles:
+  #  - prometheus
+  #  - grafana
 
-- hosts: logging
-  become: true
-  roles:
-    - elk
-    - kibana
+#hosts: logging
+#  become: true
+#  roles:
+  #  - elk
+  #  - kibana

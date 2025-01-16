@@ -1,4 +1,3 @@
----
 - name: Ensure certs directory exists
   file:
     path: "{{ cert_dir }}"
@@ -8,48 +7,62 @@
 - name: Generate CA private key
   openssl_privatekey:
     path: "{{ cert_dir }}/ca.key"
-  when: "'k8s-master' in group_names"
+  when: "'k8s-masters' in group_names"
 
 - name: Generate CA certificate
   openssl_certificate:
     path: "{{ cert_dir }}/ca.crt"
     privatekey_path: "{{ cert_dir }}/ca.key"
     provider: selfsigned
-    common_name: "kubernetes-ca"
-    # Not Before is mandatory when using selfsigned provider
-    not_before: "{{ lookup('pipe','date +%Y%m%d%H%M%S', split=' ') }}"
-    not_after: "+365d"
-    force: yes
-  when: "'k8s-master' in group_names"
+    attributes:
+      subject:
+        commonName: "kubernetes-ca"
+  when: "'k8s-masters' in group_names"
+
+- name: Set permissions on CA certificate
+  file:
+    path: "{{ cert_dir }}/ca.crt"
+    mode: 0644
+    owner: root
+    group: root # Important: Set group to root
+  when: "'k8s-masters' in group_names"
 
 - name: Generate API server private key
   openssl_privatekey:
     path: "{{ cert_dir }}/apiserver.key"
-  when: "'k8s-master' in group_names"
+  when: "'k8s-masters' in group_names"
 
 - name: Generate API server certificate signing request
   openssl_csr:
     path: "{{ cert_dir }}/apiserver.csr"
     privatekey_path: "{{ cert_dir }}/apiserver.key"
-    common_name: "kubernetes"
-    subject_alt_name:
-      - "IP:{{ k8s_control_plane_ip }}"
-      - "DNS:kubernetes"
-      - "DNS:kubernetes.default"
-      - "DNS:kubernetes.default.svc"
-      - "DNS:kubernetes.default.svc.cluster"
-      - "DNS:kubernetes.default.svc.cluster.local"
-  when: "'k8s-master' in group_names"
+    attributes:
+      subject:
+        commonName: "kubernetes"
+      alt_names:
+        - "IP:{{ k8s_control_plane_ip }}"
+        - "DNS:kubernetes"
+        - "DNS:kubernetes.default"
+        - "DNS:kubernetes.default.svc"
+        - "DNS:kubernetes.default.svc.cluster"
+        - "DNS:kubernetes.default.svc.cluster.local"
+  when: "'k8s-masters' in group_names"
 
 - name: Generate API server certificate signed by CA
   openssl_certificate:
     path: "{{ cert_dir }}/apiserver.crt"
     privatekey_path: "{{ cert_dir }}/apiserver.key"
     csr_path: "{{ cert_dir }}/apiserver.csr"
-    ca_path: "{{ cert_dir }}/ca.crt"
+    ca_cert_path: "{{ cert_dir }}/ca.crt"
     ca_privatekey_path: "{{ cert_dir }}/ca.key"
-    provider: ca
-    not_before: "{{ lookup('pipe','date +%Y%m%d%H%M%S', split=' ') }}"
-    not_after: "+365d"
+    provider: csr
     force: yes
-  when: "'k8s-master' in group_names"
+  when: "'k8s-masters' in group_names"
+
+- name: Set permissions on API server certificate
+  file:
+    path: "{{ cert_dir }}/apiserver.crt"
+    mode: 0644
+    owner: root
+    group: root # Important: Set group to root
+  when: "'k8s-masters' in group_names"
